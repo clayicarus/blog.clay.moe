@@ -172,10 +172,22 @@ search:
     index_pages: true
 # Comment plugin configurations
 # https://ppoffice.github.io/hexo-theme-icarus/categories/Plugins/Comment/
-#comment:
-    #type: disqus
-    ## Disqus shortname
-    #shortname: ''
+comment:
+    type: gitalk
+    client_id: x
+    client_secret: y
+    repo: blog.clay.moe
+    owner: clayicarus
+    admin:
+        - clayicarus
+    per_page: 20                    # Optional
+    distraction_free_mode: false    # Optional
+    pager_direction: last           # Optional
+    create_issue_manually: false    # Optional
+    proxy:                          # Optional
+    flip_move_options:              # Optional
+    enable_hotkey: true             # Optional
+    language: zh-CN                 # Optional
 # Donate plugin configurations
 # https://ppoffice.github.io/hexo-theme-icarus/categories/Plugins/Donation/
 #donates:
