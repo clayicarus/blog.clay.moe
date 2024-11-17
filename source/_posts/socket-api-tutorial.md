@@ -7,7 +7,7 @@ tags:
  - Linux
  - TCP
 categories: 
- - [术, Linux 套接字编程]
+ - [Linux 网络编程]
 excerpt: "简单讲讲 Linux 的 Socket API 的调用通用流程，以及适用于已连接套接字的相关 API。"
 ---
 
