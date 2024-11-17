@@ -2,7 +2,12 @@
 Thumbs.db
 db.json
 *.log
+
 node_modules/
+# Required
+# package-lock.json
+# package.json
+
 public/
 .deploy*/
 _multiconfig.yml
