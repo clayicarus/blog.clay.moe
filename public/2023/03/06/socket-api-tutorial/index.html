@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta><title>Linux Socket API 简明调用流程 - Clay&#039;s mews</title><link rel="manifest" href="/manifest.json"><meta name="application-name" content="Clay&#039;s mews"><meta name="msapplication-TileImage" content="/img/favicon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Clay&#039;s mews"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="description" content="简单讲讲 Linux 的 Socket API 的调用通用流程，以及适用于已连接套接字的相关 API。"><meta property="og:type" content="blog"><meta property="og:title" content="Linux Socket API 简明调用流程"><meta property="og:url" content="https://blog.mogiherins.info/2023/03/06/socket-api-tutorial/"><meta property="og:site_name" content="Clay&#039;s mews"><meta property="og:description" content="简单讲讲 Linux 的 Socket API 的调用通用流程，以及适用于已连接套接字的相关 API。"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="https://blog.mogiherins.info/img/og_image.png"><meta property="article:published_time" content="2023-03-05T16:45:26.000Z"><meta property="article:modified_time" content="2023-03-05T16:45:26.000Z"><meta property="article:author" content="clayicarus"><meta property="article:tag" content="Socket"><meta property="article:tag" content="Linux"><meta property="article:tag" content="TCP"><meta property="twitter:card" content="summary"><meta property="twitter:image:src" content="https://blog.mogiherins.info/img/og_image.png"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.mogiherins.info/2023/03/06/socket-api-tutorial/"},"headline":"Linux Socket API 简明调用流程","image":["https://blog.mogiherins.info/img/og_image.png"],"datePublished":"2023-03-05T16:45:26.000Z","dateModified":"2023-03-05T16:45:26.000Z","author":{"@type":"Person","name":"clayicarus"},"publisher":{"@type":"Organization","name":"Clay's mews","logo":{"@type":"ImageObject","url":"https://blog.mogiherins.info/img/favicon.png"}},"description":"简单讲讲 Linux 的 Socket API 的调用通用流程，以及适用于已连接套接字的相关 API。"}</script><link rel="canonical" href="https://blog.mogiherins.info/2023/03/06/socket-api-tutorial/"><link rel="icon" href="/img/favicon.png"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/6.0.0/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/highlight.js/11.7.0/styles/atom-one-light.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Ubuntu:wght@400;600&amp;family=Source+Code+Pro"><link rel="stylesheet" href="/css/default.css"><style>body>.footer,body>.navbar,body>.section{opacity:0}</style><!--!--><!--!--><!--!--><!--!--><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/lightgallery/1.10.0/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.8.1/css/justifiedGallery.min.css"><!--!--><!--!--><style>.pace{-webkit-pointer-events:none;pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}.pace-inactive{display:none}.pace .pace-progress{background:#3273dc;position:fixed;z-index:2000;top:0;right:100%;width:100%;height:2px}</style><script src="https://cdnjs.loli.net/ajax/libs/pace/1.2.4/pace.min.js"></script><!--!--><!--!--><!-- hexo injector head_end start --><script>
+  (function () {
+      function switchTab() {
+          if (!location.hash) {
+            return;
+          }
+
+          const id = '#' + CSS.escape(location.hash.substring(1));
+          const $tabMenu = document.querySelector(`.tabs a[href="${id}"]`);
+          if (!$tabMenu) {
+            return;
+          }
+
+          const $tabMenuContainer = $tabMenu.parentElement.parentElement;
+          Array.from($tabMenuContainer.children).forEach($menu => $menu.classList.remove('is-active'));
+          Array.from($tabMenuContainer.querySelectorAll('a'))
+              .map($menu => document.getElementById($menu.getAttribute("href").substring(1)))
+              .forEach($content => $content.classList.add('is-hidden'));
+
+          if ($tabMenu) {
+              $tabMenu.parentElement.classList.add('is-active');
+          }
+          const $activeTab = document.querySelector(id);
+          if ($activeTab) {
+              $activeTab.classList.remove('is-hidden');
+          }
+      }
+      switchTab();
+      window.addEventListener('hashchange', switchTab, false);
+  })();
+  </script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head><body class="is-3-column"><nav class="navbar navbar-main"><div class="container navbar-container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="/img/favicon.png" alt="Clay&#039;s mews" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">Home</a><a class="navbar-item" href="/archives">Archives</a><a class="navbar-item" href="/categories">Categories</a><a class="navbar-item" href="/tags">Tags</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="GitHub" href="https://github.com/clayicarus"><i class="fab fa-github"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a></div></div></div></nav><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-6-widescreen"><div class="card"><article class="card-content article" role="article"><div class="article-meta is-size-7 is-uppercase level is-mobile"><div class="level-left"><span class="level-item"><time dateTime="2023-03-05T16:45:26.000Z" title="3/6/2023, 12:45:26 AM">2023-03-06</time>发表</span><span class="level-item"><a class="link-muted" href="/categories/Linux-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/">Linux 网络编程</a></span><span class="level-item">8 分钟读完 (大约1191个字)</span></div></div><h1 class="title is-3 is-size-4-mobile">Linux Socket API 简明调用流程</h1><div class="content"><p>简单讲讲 Linux 的 Socket API 的调用通用流程，以及适用于<strong>已连接套接字</strong>的相关 API。</p>
+<h3 id="前置概念"><a href="#前置概念" class="headerlink" title="前置概念"></a>前置概念</h3><p><strong>套接字</strong>是网络数据传输用的软件设备，表示两台计算机之间的<strong>连接（connection）</strong>。其中套接字可再细分为<strong>监听套接字</strong>和<strong>已连接套接字</strong>。</p>
+<p><strong>监听套接字</strong>则用于监听欲连接的主机，对于一个到达的新连接，对其生成一个<strong>已连接套接字</strong>。已连接套接字则为处于 ESTABLISHED 状态的套接字，用于与已连接客户通信。</p>
+<h3 id="套接字的初始化及其配置"><a href="#套接字的初始化及其配置" class="headerlink" title="套接字的初始化及其配置"></a>套接字的初始化及其配置</h3><p>我们可以将从初始化套接字到建立套接字之间的连接的过程比作从安装电话到接通电话的过程。</p>
+<p><code>socket()</code> 函数可以用于<strong>初始化</strong>一个套接字，我将其看作安装电话这一步骤。其中该函数的用法如下。参数的含义留到后续的文章再作进一步的解释。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 返回**套接字**的**文件描述符（sockfd）**，失败则返回 -1。</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">socket</span><span class="params">(<span class="type">int</span> domain, <span class="type">int</span> type, <span class="type">int</span> protocol)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>初始化一个套接字之后，我们还需要对套接字<strong>绑定（bind）</strong>合适的地址和端口。我将这个过程比作给电话分配号码的过程。这里需要注意的是，不调用 <code>bind()</code> 不会影响后续的 <code>connect()</code> 或是 <code>listen()</code> 的调用，若没有调用 <code>bind()</code> 则内核会自动选择 IP 地址和合适的端口（对于监听套接字同样适用，但是一般不会这么做）。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 成功返回 0，失败则 -1。</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">bind</span><span class="params">(<span class="type">int</span> sockfd, <span class="keyword">struct</span> sockaddr *addr, <span class="type">socklen_t</span> addrlen)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>如果仅仅希望使用该套接字去<strong>连接（connect）</strong>到<strong>监听套接字</strong>，可以直接调用 <code>connect()</code> 函数而不需要调用 <code>bind()</code>，若成功调用，则该套接字就会转化为<strong>已连接套接字</strong>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 成功返回 0，失败则返回 -1。</span></span><br><span class="line"><span class="comment">/* pserv_addr 目标服务器的 addr。 */</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">connect</span><span class="params">(<span class="type">int</span> csk, <span class="keyword">struct</span> sockaddr *pserv_addr, <span class="type">socklen_t</span> addrlen)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>再讨论监听套接字的情况。<strong>绑定（bind）</strong>套接字之后，自然就是将套接字转换为<strong>监听套接字</strong>。这里我将其比作给电话接电话线的过程。</p>
+<p>调用 <code>listen()</code>，将套接字转换为<strong>监听套接字</strong>，并指定<strong>排队（backlog）</strong>的最大连接个数。这里需要注意的是 <code>backlog</code> 参数并不完全等于实际的最大排队连接个数，<code>backlog = 0</code> 的行为是未定义的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 成功返回 0，失败则 -1。</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">listen</span><span class="params">(<span class="type">int</span> sockfd, <span class="type">int</span> backlog)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>经过一系列的操作，我们终于得到了<strong>监听套接字</strong>，此时已经可以接收到来自其他套接字的<strong>连接（connect）</strong>，对于到达的连接，我们需要调用 <code>accept()</code> 来建立连接。这里我将其比作接听电话的过程。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 成功则返回一个新的文件描述符，对应一个新的已连接套接字，失败则返回 -1。</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">accept</span><span class="params">(<span class="type">int</span> sockfd, <span class="keyword">struct</span> sockaddr *paddr, <span class="type">socklen_t</span> *addrlen)</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="建立连接后的操作"><a href="#建立连接后的操作" class="headerlink" title="建立连接后的操作"></a>建立连接后的操作</h3><p>简单提一下建立连接后的数据交换、获取对端或本端的地址信息需要用到的 API，以及其中的一些特性。</p>
+<p><strong>数据交换</strong></p>
+<p>数据交换通常会用到 <code>read()</code> 和 <code>write()</code> 函数。以下是阻塞情况下 <code>read()</code> 函数的返回值。</p>
+<table>
+<thead>
+<tr>
+<th>接收内容</th>
+<th>返回值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数据或数据捎带的ACK</td>
+<td>数据的字节数</td>
+</tr>
+<tr>
+<td>FIN</td>
+<td>EOF</td>
+</tr>
+<tr>
+<td>调用出错</td>
+<td>-1</td>
+</tr>
+</tbody></table>
+<p>对于阻塞式 IO，未知需接收数据大小时，需自定义应用级 EOF 或利用 FIN 作为接收完毕的标志。</p>
+<p><strong>关闭连接</strong></p>
+<p>对已连接套接字调用 <code>close()</code> 以关闭该套接字对应的连接。调用后引用计数减 1，当引用计数为 0 时向对端发送 FIN。</p>
+<p><strong>获取对端&#x2F;本端的套接字协议地址信息</strong></p>
+<p>可以通过调用 <code>getsockname()</code> 或 <code>getpeername()</code> 来获取某个套接字对应的 <code>sockaddr</code>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">getsockname</span><span class="params">(<span class="type">int</span> fd, <span class="keyword">struct</span> sockaddr *localaddr, <span class="type">socklen_t</span> *addrlen)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">getpeername</span><span class="params">(<span class="type">int</span> fd, <span class="keyword">struct</span> sockaddr *peeraddr, <span class="type">socklen_t</span> *addrlen)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>调用 <code>getsockname()</code> 获取与该套接字相关联的本端协议地址。在未进行<strong>绑定（bind）</strong>的已连接套接字上获得内核赋予该连接（必须已经建立连接）的本地 IP 地址和本地端口。需在成功调用 <code>connect()</code> 或 <code>accept()</code> 后调用。调用 <code>getpeername()</code> 则可以获得对端的协议地址信息。</p>
+</div><div class="article-licensing box"><div class="licensing-title"><p>Linux Socket API 简明调用流程</p><p><a href="https://blog.mogiherins.info/2023/03/06/socket-api-tutorial/">https://blog.mogiherins.info/2023/03/06/socket-api-tutorial/</a></p></div><div class="licensing-meta level is-mobile"><div class="level-left"><div class="level-item is-narrow"><div><h6>作者</h6><p>clayicarus</p></div></div><div class="level-item is-narrow"><div><h6>发布于</h6><p>2023-03-06</p></div></div><div class="level-item is-narrow"><div><h6>更新于</h6><p>2023-03-06</p></div></div><div class="level-item is-narrow"><div><h6>许可协议</h6><p><a class="icons" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="icon fab fa-creative-commons"></i></a><a class="" rel="noopener" target="_blank" title="CC BY-NC-SA 4.0" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a></p></div></div></div></div></div><div class="article-tags is-size-7 mb-4"><span class="mr-2">#</span><a class="link-muted mr-2" rel="tag" href="/tags/Socket/">Socket</a><a class="link-muted mr-2" rel="tag" href="/tags/Linux/">Linux</a><a class="link-muted mr-2" rel="tag" href="/tags/TCP/">TCP</a></div><!--!--></article></div><!--!--><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/2023/06/22/at-first/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">开个新坑</span></a></div></nav><div class="card"><div class="card-content"><h3 class="title is-5">评论</h3><div id="comment-container"></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/gitalk/1.7.2/gitalk.css"><script src="https://cdnjs.loli.net/ajax/libs/gitalk/1.7.2/gitalk.min.js"></script><script>var gitalk = new Gitalk({
+            id: "38d3c480c1f8bbfd2c5e874b07f73a23",
+            repo: "blog.clay.moe",
+            owner: "clayicarus",
+            clientID: "x",
+            clientSecret: "y",
+            admin: ["clayicarus"],
+            createIssueManually: false,
+            distractionFreeMode: false,
+            perPage: 20,
+            pagerDirection: "last",
+            
+            
+            enableHotKey: true,
+            language: "zh-CN",
+        })
+        gitalk.render('comment-container')</script></div></div></div><div class="column column-left is-4-tablet is-4-desktop is-3-widescreen  order-1"><div class="card widget" data-type="profile"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="avatar is-rounded" src="/img/himawari.png" alt="Clay"></figure><p class="title is-size-4 is-block" style="line-height:inherit;">Clay</p><p class="is-size-6 is-block">Awareless practitioner</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>Home</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">2</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">2</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">4</p></a></div></div></nav><div class="level"><a class="level-item button is-primary is-rounded" href="https://github.com/clayicarus" target="_blank" rel="noopener">关注我</a></div><div class="level is-mobile is-multiline"><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="GitHub" href="https://github.com/clayicarus"><i class="fab fa-github"></i></a></div></div></div><!--!--><div class="card widget" data-type="categories"><div class="card-content"><div class="menu"><h3 class="menu-label">分类</h3><ul class="menu-list"><li><a class="level is-mobile" href="/categories/Linux-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/"><span class="level-start"><span class="level-item">Linux 网络编程</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile" href="/categories/%E5%9E%A2/"><span class="level-start"><span class="level-item">垢</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li></ul></div></div></div><div class="card widget" data-type="tags"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/Linux/"><span class="tag">Linux</span><span class="tag">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Socket/"><span class="tag">Socket</span><span class="tag">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/TCP/"><span class="tag">TCP</span><span class="tag">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E7%A2%8E%E7%A2%8E%E5%BF%B5/"><span class="tag">碎碎念</span><span class="tag">1</span></a></div></div></div></div></div><div class="column-right-shadow is-hidden-widescreen"></div></div><div class="column column-right is-4-tablet is-4-desktop is-3-widescreen is-hidden-touch is-hidden-desktop-only order-3"><div class="card widget" data-type="recent-posts"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><div class="media-content"><p class="date"><time dateTime="2023-06-21T17:41:34.000Z">2023-06-22</time></p><p class="title"><a href="/2023/06/22/at-first/">开个新坑</a></p><p class="categories"><a href="/categories/%E5%9E%A2/">垢</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2023-03-05T16:45:26.000Z">2023-03-06</time></p><p class="title"><a href="/2023/03/06/socket-api-tutorial/">Linux Socket API 简明调用流程</a></p><p class="categories"><a href="/categories/Linux-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/">Linux 网络编程</a></p></div></article></div></div><div class="card widget" data-type="archives"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile" href="/archives/2023/06/"><span class="level-start"><span class="level-item">六月 2023</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile" href="/archives/2023/03/"><span class="level-start"><span class="level-item">三月 2023</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li></ul></div></div></div></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="/img/favicon.png" alt="Clay&#039;s mews" height="28"></a><p class="is-size-7"><span>&copy; 2024 clayicarus</span>  Powered by <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a> &amp; <a href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank" rel="noopener">Icarus</a></p><p class="is-size-7">Designed by clayicarus</p></div><div class="level-end"><div class="field has-addons"><p class="control"><a class="button is-transparent is-large" target="_blank" rel="noopener" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a></p><p class="control"><a class="button is-transparent is-large" target="_blank" rel="noopener" title="GitHub" href="https://github.com/clayicarus"><i class="fab fa-github"></i></a></p></div></div></div></div></footer><script src="https://cdnjs.loli.net/ajax/libs/jquery/3.3.1/jquery.min.js"></script><script src="https://cdnjs.loli.net/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js"></script><script src="https://cdnjs.loli.net/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" defer></script><script>moment.locale("zh-cn");</script><script>var IcarusThemeSettings = {
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="/js/column.js"></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back_to_top.js" defer></script><!--!--><!--!--><!--!--><script src="https://cdnjs.loli.net/ajax/libs/lightgallery/1.10.0/js/lightgallery.min.js" defer></script><script src="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.8.1/js/jquery.justifiedGallery.min.js" defer></script><script>window.addEventListener("load", () => {
+            if (typeof $.fn.lightGallery === 'function') {
+                $('.article').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof $.fn.justifiedGallery === 'function') {
+                if ($('.justified-gallery > p > .gallery-item').length) {
+                    $('.justified-gallery > p > .gallery-item').unwrap();
+                }
+                $('.justified-gallery').justifiedGallery();
+            }
+        });</script><!--!--><!--!--><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><div class="searchbox"><div class="searchbox-container"><div class="searchbox-header"><div class="searchbox-input-container"><input class="searchbox-input" type="text" placeholder="想要查找什么..."></div><a class="searchbox-close" href="javascript:;">×</a></div><div class="searchbox-body"></div></div></div><script src="/js/insight.js" defer></script><script>document.addEventListener('DOMContentLoaded', function () {
+            loadInsight({"contentUrl":"/content.json"}, {"hint":"想要查找什么...","untitled":"(无标题)","posts":"文章","pages":"页面","categories":"分类","tags":"标签"});
+        });</script></body></html>
