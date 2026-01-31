@@ -6,7 +6,7 @@ tags:
  - Linux
  - ArchLinux
 categories: 
- - [Linux 运维, 垢]
+ - [Linux 运维]
 excerpt: "这东西简直就是个便携 linux 服务器！"
 ---
 

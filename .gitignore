@@ -8,7 +8,7 @@ node_modules/
 # package-lock.json
 # package.json
 
-# public/
+public/
 .deploy*/
 _multiconfig.yml
 _config.icarus.example.yml
