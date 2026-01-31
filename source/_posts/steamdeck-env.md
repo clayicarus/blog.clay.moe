@@ -66,7 +66,7 @@ tmpfs           7.3G  7.3M  7.3G   1% /tmp
 tmpfs           1.5G  4.1M  1.5G   1% /run/user/1000
 ```
 
-关闭 steamos rootfs 写保护（rootfs是根目录分区，pacman安装的软件包都会放在`/usr`；总共只有5GB的空间！总共只有5GB的空间！）
+关闭 steamos rootfs 写保护（rootfs 是根目录分区，pacman 安装的软件包都会放在 `/usr` ；总共只有5GB的空间！总共只有5GB的空间！）
 
 ```
 sudo steamos-readonly disable
@@ -101,7 +101,7 @@ while in dev mode.
 See also `steamos-unminimize`
 ```
 
-**注意！**这里不要使用 `steamos-unminimize` 配置环境，因为这个命令安装的软件包会比 1.5GB 要多，建议安装文章手动配置。
+**注意！**这里不要使用 `steamos-unminimize` 配置环境，因为这个命令安装的软件包所需要的空间会比1.5GB要多，建议按照文章手动配置。
 
 监听 ssh 连接
 
