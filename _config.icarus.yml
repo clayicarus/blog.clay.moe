@@ -164,6 +164,10 @@ article:
             url: 'https://creativecommons.org/'
         'CC BY-NC-SA 4.0': 'https://creativecommons.org/licenses/by-nc-sa/4.0/'
 
+# Table of contents (TOC) settings
+# Set to true to show TOC on post/page pages
+toc: true
+
 # Search plugin configurations
 # https://ppoffice.github.io/hexo-theme-icarus/categories/Plugins/Search/
 search:
@@ -237,7 +241,7 @@ sidebar:
     # Right sidebar configurations
     right:
         # Whether the sidebar sticks to the top when page scrolls
-        sticky: false
+        sticky: true
 # Sidebar widget configurations
 # http://ppoffice.github.io/hexo-theme-icarus/categories/Widgets/
 widgets:
@@ -249,9 +253,9 @@ widgets:
         # Author name
         author: Clay
         # Author title
-        author_title: Awareless practitioner
+        author_title: 魔法が好き
         # Author's current location
-        location: Home
+        location:
         # URL or path to the avatar image
         avatar: img/himawari.png
         # Whether show the rounded avatar image
@@ -280,10 +284,10 @@ widgets:
     # Table of contents widget configurations
     -
         # Where should the widget be placed, left sidebar or right sidebar
-        position: left
+        position: right
         type: toc
         # Whether to show the index of each heading
-        index: true
+        index: false
         # Whether to collapse sub-headings when they are out-of-view
         collapsed: true
         # Maximum level of headings to show (1-6)
@@ -310,7 +314,7 @@ widgets:
     # Archives widget configurations
     -
         # Where should the widget be placed, left sidebar or right sidebar
-        position: right
+        position: left
         type: archives
     # Tags widget configurations
     -
