@@ -2,6 +2,7 @@
 Thumbs.db
 db.json
 *.log
+*.diff
 
 node_modules/
 # Required

@@ -45,16 +45,16 @@ head:
         type: blog
         # Page URL (og:url) (optional)
         # You should leave this blank for most of the time
-        url: 
+        url: 'https://blog.clay.moe'
         # Page cover (og:image) (optional)
         # You should leave this blank for most of the time
-        image: 
+        image: 'https://blog.clay.moe/img/favicon.png'
         # Site name (og:site_name) (optional)
         # You should leave this blank for most of the time
-        site_name: 
+        site_name: "Clay's mews"
         # Page author (article:author) (optional)
         # You should leave this blank for most of the time
-        author: 
+        author: 'Clay'
         # Page description (og:description) (optional)
         # You should leave this blank for most of the time
         description: 
@@ -225,10 +225,8 @@ comment:
         #qrcode: ''
 # Share plugin configurations
 # https://ppoffice.github.io/hexo-theme-icarus/categories/Plugins/Share/
-#share:
-    #type: sharethis
-    ## URL to the ShareThis share plugin script
-    #install_url: ''
+share:
+    type: addtoany
 # Sidebar configurations.
 # Please be noted that a sidebar is only visible when it has at least one widget
 sidebar:
