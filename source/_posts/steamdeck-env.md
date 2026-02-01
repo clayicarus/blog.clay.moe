@@ -7,14 +7,14 @@ tags:
  - ArchLinux
 categories: 
  - [Linux 运维]
-excerpt: "这东西简直就是个便携 linux 服务器！"
+excerpt: "记录笔者在 steamdeck 上配置 gcc 编译环境时的经验。"
 ---
 
-**这东西简直就是个便携 linux 服务器！**
+**这东西简直就是个便携 Linux 服务器！**
 
-本文记录笔者在 steamdeck 上配置 gcc 编译环境时的经验。
+笔者最近整了一台 steamdeck，打算将其改造为通用 Linux 服务器，方便携带。
 
-发行版是 archlinux，魔改为 steamos，文章面向有 linux 使用基础但不熟悉 archlinux 的读者，不过大概也只有包管理器的差别。
+发行版是 ArchLinux，魔改为 SteamOS，文章面向有 Linux 使用基础但不熟悉 ArchLinux 的读者，不过大概也只有包管理器的差别。
 
 # 1. 准备工作
 
@@ -24,7 +24,7 @@ excerpt: "这东西简直就是个便携 linux 服务器！"
 passwd
 ```
 
-看一下 steamdeck 的分区结构，可以看到根目录的分区只有5GB空间，而且已经用掉了70%，仅剩下1.5GB的操作空间，这就要求我们只能用pacman安装最重要的软件包，不能一股脑地全部都用 pacman 安装。（这里不讨论改 pacman 安装目录的方法，可以预见地，引入的问题会比解决的问题要多得多。）
+看一下 steamdeck 的分区结构，可以看到根目录的分区只有5GB空间，而且已经用掉了70%，仅剩下1.5GB的操作空间，这就要求我们只能用 pacman 安装最重要的软件包，不能一股脑地全部都用 pacman 安装。（这里不讨论改 pacman 安装目录的方法，可以预见地，引入的问题会比解决的问题要多得多。）
 
 ```sh
 (1)(deck@steamdeck ~)$ lsblk
@@ -140,12 +140,12 @@ sudo pacman -S base-devel
 修复 glibc 并安装 C/C++ 头文件
 
 ```sh
-sudo pacmam -S glibc linux-api-headers
+sudo pacman -S glibc linux-api-headers
 ```
 
-现在基本的依赖已经有了，写个 C++ 代码验证一下环境
+现在基本的依赖已经有了，我们编译一个 C++ 源文件验证环境。
 
-# 3. 验证
+# 3. 验证环境
 
 ```cpp
 /* test.cpp */
@@ -183,9 +183,7 @@ int main() {
 hello steamos
 ```
 
-看起来 C++17 是能编译过的，基本的构建环境已经具备了。
-
-看一下此时的 rootfs 还有多少空间，大约用掉了 200MB
+可以看一下此时的 rootfs 还有多少空间
 
 ```sh
 Filesystem      Size  Used Avail Use% Mounted on
@@ -203,9 +201,9 @@ tmpfs           7.3G  7.3M  7.3G   1% /tmp
 tmpfs           1.5G  4.1M  1.5G   1% /run/user/1000
 ```
 
-# 3. 安装新的软件包？
+# 4. 安装新的软件包？
 
-基本的构建能力已经具备，此时建议不要再使用 pacman 增加新的软件包，最好 `sudo steamos-readonly enable`，在用户分区增加自己的需要的软件，这里以 `cmake` 为例，介绍一下如何安装到自己指定的目录（`~/.local`）。
+由于此时基本的构建能力已经具备，建议不要再使用 pacman 增加新的软件包，最好 `sudo steamos-readonly enable`，在用户分区增加自己需要的软件，这里以 `cmake` 为例，介绍一下如何安装到自己指定的目录（`~/.local`）。
 
 **配置环境**
 
@@ -230,7 +228,11 @@ export PATH=$PATH:~/.local/bin
 
 `wget https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-linux-x86_64.tar.gz`
 
-解压，然后要么 `mv cmake-3.31.6-linux-x86_64/* ~/.local`，要么直接创建软链接 `ln -s cmake-3.31.6-linux-x86_64/bin/* ~/.local/bin`
+解压，然后要么 `mv cmake-3.31.6-linux-x86_64/* ~/.local`，要么直接创建软链接到 bin 目录（需要使用绝对路径）：
+
+```sh
+ln -s $PWD/cmake-3.31.6-linux-x86_64/bin/* ~/.local/bin/
+```
 
 **手动编译 cmake**
 
@@ -251,9 +253,13 @@ cmake version 3.31.6
 CMake suite maintained and supported by Kitware (kitware.com/cmake).
 ```
 
-卸载的话，只要在 `install_manifest.txt` 所在目录执行 `make uninstall` 即可。
+若需卸载，只要在 `install_manifest.txt` 所在目录执行 `make uninstall` 即可。
 
-# 4. 参考信息
+```sh
+(deck@steamdeck cmake-3.31.6)$ make uninstall
+```
+
+# 5. 参考信息
 
 **flatpak 换源**
 
@@ -269,14 +275,14 @@ flatpak remote-modify flathub --url=http://mirror.sjtu.edu.cn/flathub
 - `LD_LIBRARY_PATH`
 - `LD_RUN_PATH`
 
-**介绍一下pacman包管理常用命令**
+**pacman 包管理常用命令**
 
 ```sh
 # 获取更新信息
 sudo pacman -Sy
-# 安装软件包更新
+# 强制刷新软件包数据库
 sudo pacman -Syyy
-# 更新系统内核
+# 更新系统和软件包
 sudo pacman -Syu
 # 安装软件包
 sudo pacman -S package_name
@@ -284,7 +290,7 @@ sudo pacman -S package_name
 sudo pacman -Rs package_name
 ```
 
-**automake, autoconf使用详解**
+**automake, autoconf 使用详解**
 
 https://www.laruence.com/2009/11/18/1154.html
 
